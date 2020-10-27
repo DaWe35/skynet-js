@@ -21,9 +21,14 @@ export function HashAll(...args: any[]): Uint8Array {
   return blake.blake2bFinal(h);
 }
 
+// HashDataKey the given registry entry.
+export function HashDataKey(datakey: string): Uint8Array {
+  return HashAll(encodeString(datakey));
+}
+
 // Hashes the given registry entry.
 export function HashRegistryEntry(registryEntry: RegistryEntry): Uint8Array {
-  return HashAll(encodeString(registryEntry.data), encodeNumber(registryEntry.revision));
+  return HashAll(HashDataKey(registryEntry.datakey), encodeString(registryEntry.data), encodeNumber(registryEntry.revision));
 }
 
 // encodeNumber converts the given number into a uint8 array

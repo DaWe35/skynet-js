@@ -2,13 +2,14 @@ import { AxiosResponse } from "axios";
 import { SkynetClient } from "./client";
 import { defaultOptions, hexToUint8Array } from "./utils";
 import { Buffer } from "buffer";
-import { PublicKey, Signature } from "./crypto";
+import { HashDataKey, PublicKey, Signature } from "./crypto";
 
 const defaultRegistryOptions = {
   ...defaultOptions("/skynet/registry"),
 };
 
 export type RegistryEntry = {
+  datakey: string;
   data: string;
   revision: number;
 };
@@ -38,10 +39,11 @@ export async function getEntry(
       method: "get",
       query: {
         publickey: `ed25519:${userID}`,
-        datakey,
+        datakey: Buffer.from(HashDataKey(datakey)).toString('hex'),
       },
     });
   } catch (err: unknown) {
+    console.log('GetEntry ERROR', err)
     // unfortunately axios rejects anything that's not >= 200 and < 300
     return null;
   }
@@ -49,6 +51,7 @@ export async function getEntry(
   if (response.status === 200) {
     return {
       entry: {
+        datakey,
         data: Buffer.from(hexToUint8Array(response.data.data)).toString(),
         // TODO: Handle uint64 properly.
         revision: parseInt(response.data.revision, 10),
@@ -83,13 +86,14 @@ export async function setEntry(
           algorithm: "ed25519",
           key: Array.from(publickey),
         },
-        datakey,
+        datakey: Buffer.from(HashDataKey(datakey)).toString('hex'),
         revision: entry.revision,
         data: Array.from(Buffer.from(entry.data)),
         signature: Array.from(signature),
       },
     });
   } catch (err: unknown) {
+    console.log('registry error', err)
     // unfortunately axios rejects anything that's not >= 200 and < 300
     return false;
   }
